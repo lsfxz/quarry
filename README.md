@@ -32,3 +32,5 @@ If slot version has no config then it checks config for less specific slot. E.g.
 If gem requires patching then you can add $PACKAGE.patch file and it will be applied automatically before installing the gem.
 
 File *rebuild_packages* contains list of gems to force rebuild with new pkgrel. It might be useful if e.g. configuration for the gem has changed.
+
+File *aliases.yaml* contains name mappings between ruby gem and arch package. By default the mapping for arch package name is _ruby-gem\_name_ but it can be changed via aliases file. The format of the file is 'gem\_name: arch\_package'.

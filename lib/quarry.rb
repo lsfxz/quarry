@@ -5,6 +5,7 @@ require 'pathname'
 require 'rubygems/name_tuple'
 require 'rubygems/package'
 require 'rubygems/remote_fetcher'
+require 'yaml'
 
 
 
@@ -32,7 +33,7 @@ CONFLICTING_GEMS = %w(rake rdoc)
 PKGBUILD = %{# Maintainer: Ruby quarry (https://github.com/anatol/quarry)
 
 _gemname=<%= gem_name %>
-pkgname=ruby-$_gemname<%= slot %>
+pkgname=<%= pkgname %><%= slot %>
 pkgver=<%= pkgver %>
 pkgrel=<%= pkgrel %>
 pkgdesc=<%= description %>
@@ -128,14 +129,18 @@ def load_arch_packages
   `tar xvfJ #{REPO_DB_FILE} -C #{WORK_REPO_DIR}`
 
   result = {} # [name,slot] => [version,pkgver,[depenedncies]]
-  for p in Dir[WORK_REPO_DIR + '/ruby-*'] do
+  for p in Dir[WORK_REPO_DIR + '/*'] do
     # parse Arch description file
     desc = IO.readlines(p + '/desc').map(&:strip)
     arch_name = desc[desc.index('%NAME%')+1]
     arch_version = desc[desc.index('%VERSION%')+1]
     arch_filename = desc[desc.index('%FILENAME%')+1]
 
-    key = arch_to_pkg(arch_name)
+    key,stale_alias = arch_to_pkg(arch_name)
+    if stale_alias
+      puts "Skip stale alias #{arch_name}"
+      next
+    end
     fail("Duplicated package exists: #{arch_name}") if result[key]
 
     if arch_version =~ /^(.*)-(\d+)$/
@@ -163,29 +168,57 @@ def load_arch_packages
   return result
 end
 
+def load_aliases
+  YAML.load(IO.read(File.join(QUARRY_DIR, 'aliases.yaml')))
+end
+
 def pkg_to_arch(name, slot, with_prefix=true)
-  result = with_prefix ? 'ruby-' : ''
-  result += name
+  if aliaz = @aliases[name]
+    result = aliaz
+  else
+    result = with_prefix ? 'ruby-' : ''
+    result += name
+  end
+
   result += '-' + slot if slot
   return result
 end
 
 # String => [name, slot]
 def arch_to_pkg(arch_name)
-  fail("Package name #{arch_name} does not start with ruby- prefix") unless arch_name.start_with?('ruby-')
-  name = arch_name[5..-1]
-  # check if the name itself exists
-  return [name, nil] if @gems_stable[name]
+  stale_alias = false
+  # first lets check it is non-slot version
+  if gem = @aliases.key(arch_name)
+    fail("Arch package #{arch_name} aliased to #{gem} but there is no such gem") unless @gems_stable[gem]
+    return [gem, nil],stale_alias
+  elsif arch_name.start_with?('ruby-')
+    name = arch_name[5..-1]
+    # special case - alias exists but it differs from arch_name
+    stale_alias = true if aliaz = @aliases[name] and aliaz != arch_name
+    return [name, nil],stale_alias if @gems_stable[name]
+  end
 
-  separator = name.rindex('-')
+  # ok, it must be slot version
+  separator = arch_name.rindex('-')
   fail("Cannot find gem for arch package #{arch_name}") unless separator
 
-  slot = name[separator+1..-1]
-  name = name[0..separator-1]
-
+  slot = arch_name[separator+1..-1]
+  name = arch_name[0..separator-1]
   index = prerelease_version?(slot) ? @gems_beta : @gems_stable
-  fail("Cannot find gem with name #{name} for arch package #{arch_name}") unless index[name]
-  return [name, slot]
+  if gem = @aliases.key(name)
+    fail("Arch package #{name} aliased to #{gem} but there is no such gem") unless index[gem]
+    name = gem
+  else
+    fail("Package name #{arch_name} does not start with ruby- prefix") unless name.start_with?('ruby-')
+    name = name[5..-1]
+    fail("Cannot find gem with name #{name} for arch package #{arch_name}") unless index[name]
+
+    # special case - alias exists but it differs from arch_name
+    aliaz = @aliases[name]
+    stale_alias = (aliaz and aliaz != 'ruby-' + name)
+  end
+
+  return [name, slot],stale_alias
 end
 
 def load_packages(packages_file, check_existance=true)
@@ -271,6 +304,9 @@ def gem_exists(name, version)
 end
 
 def init
+  # gem -> arch
+  @aliases = load_aliases
+
   @gems_stable = load_gem_index(:released)
   @gems_beta = load_gem_index(:prerelease)
 
@@ -286,6 +322,7 @@ def init
     user = ENV['USER']
 
     # Remove possible cache files left from previous build
+    # todo: our package can start with any prefix now
     `sudo rm -f /var/cache/pacman/pkg/ruby-*`
 
     `mkarchroot -C /usr/share/devtools/pacman-extra.conf -M /usr/share/devtools/makepkg-x86_64.conf #{CHROOT_ROOT_DIR} base-devel ruby`
@@ -446,10 +483,12 @@ def generate_pkgbuild(name, slot, existing_pkg, config)
   optdepends = (config and config['optdepends'])
   makedepends = (config and config['makedepends'])
   rename = (config and config['rename'])
+  aliaz = @aliases[name]
 
   # TOTHINK: install binaries into directory other than /usr/bin?
   params = {
     gem_name: name,
+    pkgname: aliaz ? aliaz : 'ruby-$_gemname',
     slot: slot ? '-' + slot : '',
     pkgver: version,
     pkgrel: pkgver,  # if existing version has the same version then +1 here
