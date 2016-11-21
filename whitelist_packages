@@ -8,7 +8,6 @@ bettercap
 whitewidow
 zip
 blankslate
-ruby1.9
 changeme
 recoverjpeg
 mini_portile2
@@ -26,10 +25,8 @@ origami
 zxing
 json
 wifi-honey
-ruby1.9-bundler
 colorize
 uri-query_params
-ruby1.8-sqlite3
 hoper
 text-table
 http_configuration
@@ -53,7 +50,6 @@ rubyzip
 ruby1.9-ruby-termios
 ntlm-http
 wpbrute-rpc
-ruby1.8-rake
 cookiejar
 uuidtools
 gscraper
