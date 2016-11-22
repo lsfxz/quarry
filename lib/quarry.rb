@@ -22,7 +22,8 @@ CHROOT_QUARRY_PATH = '/var/quarry-repo' # path to quarry repository inside the c
 
 # TODO: choose other directory to avoid file conflicts?
 GEM_DIR = Gem.default_dir
-GEM_EXTENSION_DIR = File.join(GEM_DIR, 'extensions', Gem::Platform.local.to_s, Gem.extension_api_version)
+# GEM_EXTENSION_DIR = File.join(GEM_DIR, 'extensions', Gem::Platform.local.to_s, Gem.extension_api_version)
+GEM_EXTENSION_DIR = File.join(GEM_DIR, 'extensions', '$CARCH', Gem.extension_api_version)
 
 # gems that conflict with ruby package, 'ruby' already provides it
 # Some gems are bundled:
@@ -31,8 +32,10 @@ GEM_EXTENSION_DIR = File.join(GEM_DIR, 'extensions', Gem::Platform.local.to_s, G
 CONFLICTING_GEMS = %w(power_assert test-unit minitest rake net-telnet did_you_mean rdoc)
 
 
-PKGBUILD = %{# Maintainer: Ruby quarry (https://github.com/anatol/quarry)
-
+PKGBUILD = %{# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
+# Many thanks to anatol for quarry and gem2arch!
+# This file is part of BlackArch Linux ( http://blackarch.org ).
+# See COPYING for license details.
 _gemname=<%= gem_name %>
 pkgname=ruby-$_gemname<%= slot %>
 pkgver=<%= pkgver %>
@@ -43,6 +46,8 @@ url=<%= website %>
 license=(<%= license %>)
 depends=(<%= depends %>)
 makedepends=(<%= makedepends.join(' ') if makedepends %>)
+groups=(<%= groups.join(' ') if groups %>)
+replaces=(<%= replaces if replaces %>)
 optdepends=(<% for k,v in optdepends -%>
   '<%= k %>: <%= v %>'
 <% end if optdepends %>
@@ -315,6 +320,7 @@ def init
 
     open(pacman_conf, 'a') { |f|
       f.puts '[quarry]'
+      f.puts 'SigLevel = Optional TrustAll'
       f.puts "Server = file://#{CHROOT_QUARRY_PATH}"
     }
 
@@ -474,6 +480,8 @@ def generate_pkgbuild(name, slot, existing_pkg, config)
 
   optdepends = (config and config['optdepends'])
   makedepends = (config and config['makedepends'])
+  groups = (config and config['groups'])
+  replaces = (config and config['replaces'])
   rename = (config and config['rename'])
   gem_install_args = (config and config['gem_install_args'])
 
@@ -497,6 +505,8 @@ def generate_pkgbuild(name, slot, existing_pkg, config)
     patch_sha: patch_sha,
     makedepends: makedepends,
     optdepends: optdepends,
+    groups: groups,
+    replaces: replaces,
     rename: rename,
     gem_install_args: gem_install_args
   }

@@ -18,4 +18,4 @@ packages_to_generate.uniq!
 
 repo_modified = build_packages(packages_to_generate, existing_packages)
 
-copy_repo_to('celestia:packages/quarry/x86_64/') if repo_modified
+copy_repo_to('../out/packages/quarry/x86_64/') if repo_modified
