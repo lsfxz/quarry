@@ -1,0 +1,8 @@
+replaces:
+  - drupalscan
+
+groups:
+  - blackarch
+  - blackarch-webapp
+  - blackarch-scanner
+

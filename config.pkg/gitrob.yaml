@@ -1,0 +1,7 @@
+replaces:
+  - gitrob
+
+groups:
+  - blackarch
+  - blackarch-scanner
+

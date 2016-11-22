@@ -1,0 +1,7 @@
+replaces:
+  - hoper
+
+groups:
+  - blackarch
+  - blackarch-recon
+

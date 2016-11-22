@@ -47,7 +47,7 @@ license=(<%= license %>)
 depends=(<%= depends %>)
 makedepends=(<%= makedepends.join(' ') if makedepends %>)
 groups=(<%= groups.join(' ') if groups %>)
-replaces=(<%= replaces if replaces %>)
+replaces=(<%= replaces.join(' ') if replaces %>)
 optdepends=(<% for k,v in optdepends -%>
   '<%= k %>: <%= v %>'
 <% end if optdepends %>

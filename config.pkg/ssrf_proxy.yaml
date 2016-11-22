@@ -1,0 +1,8 @@
+replaces:
+  - ssrf-proxy
+
+groups:
+  - blackarch
+  - blackarch-proxy
+  - blackarch-tunnel
+

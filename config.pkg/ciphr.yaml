@@ -1,0 +1,7 @@
+replaces:
+  - ciphr
+
+groups:
+  - blackarch
+  - blackarch-crypto
+

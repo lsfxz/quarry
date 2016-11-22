@@ -1,2 +1,5 @@
+replaces:
+  - ruby-nmap
+
 depends:
  - nmap
