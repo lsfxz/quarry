@@ -48,6 +48,8 @@ depends=(<%= depends %>)
 makedepends=(<%= makedepends.join(' ') if makedepends %>)
 groups=(<%= groups.join(' ') if groups %>)
 replaces=(<%= replaces.join(' ') if replaces %>)
+conflicts=(<%= replaces.join(' ') if replaces %>)
+provides=(<%= replaces.join(' ') if replaces %>)
 optdepends=(<% for k,v in optdepends -%>
   '<%= k %>: <%= v %>'
 <% end if optdepends %>
