@@ -1,0 +1,7 @@
+replaces:
+  - vcsmap
+
+groups:
+  - blackarch
+  - blackarch-scanner
+
