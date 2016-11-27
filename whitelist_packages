@@ -48,3 +48,16 @@ yawast
 zip
 zxing
 vcsmap
+binproxy
+mime-types
+typhoeus
+require_all
+highline
+artii
+rchardet
+arachni
+digest
+addressable
+terminal-table
+ruby-progressbar
+netaddr

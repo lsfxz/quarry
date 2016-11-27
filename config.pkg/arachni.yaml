@@ -1,0 +1,7 @@
+replaces:
+  - arachni
+
+groups:
+  - blackarch
+  - blackarch-webapp
+

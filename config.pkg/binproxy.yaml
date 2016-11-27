@@ -1,0 +1,8 @@
+replaces:
+  - binproxy
+
+groups:
+  - blackarch
+  - blackarch-proxy
+  - blackarch-networking
+
