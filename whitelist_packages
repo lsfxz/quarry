@@ -61,3 +61,4 @@ addressable
 terminal-table
 ruby-progressbar
 netaddr
+sqlite3
