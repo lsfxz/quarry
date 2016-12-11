@@ -450,12 +450,15 @@ def generate_pkgbuild(name, slot, existing_pkg, config)
   end
   pkgver = existing_pkg[1]
 
-  arch = spec.extensions.empty? ? 'any' : 'i686 x86_64'
+  # let's just assume seperate packages for every architecture are required
+  # for gems with native extensions… better safe than sorry.
+  arch = spec.extensions.empty? ? 'any' : 'armv7h armv6h i686 x86_64'
   sha1sum = Digest::SHA1.file(gem_path).hexdigest
   # TODO: if license is not specified in spec, check HEAD spec, check -beta spec
   licenses = spec.licenses.map{|l| Shellwords.escape(l)}
   dependencies = generate_dependency_list(spec, config)
   existing_pkg[2] = dependencies
+  # the following shouldn't matter if I only need the PKGBUILDS later on anyway…
   filename_arch = spec.extensions.empty? ? 'any' : 'x86_64'
   bin_filename = "#{arch_name}-#{version}-#{pkgver}-#{filename_arch}.pkg.tar.xz"
 
