@@ -1,0 +1,9 @@
+
+replaces:
+  - origami
+
+groups:
+  - blackarch
+  - blackarch-malware
+  - blackarch-binary
+
