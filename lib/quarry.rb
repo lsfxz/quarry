@@ -21,9 +21,11 @@ CHROOT_ROOT_DIR = File.join(CHROOT_DIR, 'root')
 CHROOT_QUARRY_PATH = '/var/quarry-repo' # path to quarry repository inside the chroot
 
 # TODO: choose other directory to avoid file conflicts?
-GEM_DIR = Gem.default_dir
+# GEM_DIR = Gem.default_dir
+GEM_DIR = "$(ruby -rubygems -e 'puts Gem.default_dir')"
 # GEM_EXTENSION_DIR = File.join(GEM_DIR, 'extensions', Gem::Platform.local.to_s, Gem.extension_api_version)
-GEM_EXTENSION_DIR = File.join(GEM_DIR, 'extensions', '$CARCH', Gem.extension_api_version)
+# GEM_EXTENSION_DIR = File.join(GEM_DIR, 'extensions', '$CARCH', Gem.extension_api_version)
+GEM_EXTENSION_DIR = File.join('/$_gemdir', 'extensions', '$CARCH', '$(ruby -rubygems -e puts Gem.extension_api_version)')
 
 # gems that conflict with ruby package, 'ruby' already provides it
 # Some gems are bundled:
@@ -135,7 +137,7 @@ def load_arch_packages
 
   `tar xvfJ #{REPO_DB_FILE} -C #{WORK_REPO_DIR}`
 
-  result = {} # [name,slot] => [version,pkgver,[depenedncies]]
+  result = {} # [name,slot] => [version,pkgver,[dependencies]]
   for p in Dir[WORK_REPO_DIR + '/ruby-*'] do
     # parse Arch description file
     desc = IO.readlines(p + '/desc').map(&:strip)
@@ -287,7 +289,7 @@ def slot_to_version(name, slot)
     next unless matches_ruby(name, version)
     return version
   end
-  fail("Cannot find version for [#{name},#{slot}] that match current ruby version")
+  fail("Cannot find version for [#{name},#{slot}] that matches current ruby version")
 end
 
 # Checks that given gem [name,version] existst in the gem index
