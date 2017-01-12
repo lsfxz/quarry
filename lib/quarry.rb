@@ -25,7 +25,7 @@ CHROOT_QUARRY_PATH = '/var/quarry-repo' # path to quarry repository inside the c
 GEM_DIR = "$(ruby -rubygems -e 'puts Gem.default_dir')"
 # GEM_EXTENSION_DIR = File.join(GEM_DIR, 'extensions', Gem::Platform.local.to_s, Gem.extension_api_version)
 # GEM_EXTENSION_DIR = File.join(GEM_DIR, 'extensions', '$CARCH', Gem.extension_api_version)
-GEM_EXTENSION_DIR = File.join('/$_gemdir', 'extensions', '$CARCH', '$(ruby -rubygems -e puts Gem.extension_api_version)')
+GEM_EXTENSION_DIR = File.join('$_gemdir', 'extensions', '$CARCH', '$(ruby -rubygems -e puts Gem.extension_api_version)')
 
 # gems that conflict with ruby package, 'ruby' already provides it
 # Some gems are bundled:
@@ -42,29 +42,29 @@ pkgname='ruby-<%= gem_name + slot %>'
 _gemname='<%= gem_name %>'
 pkgver='<%= pkgver %>'
 pkgrel=<%= pkgrel %>
-pkgdesc='<%= description %>'
+pkgdesc="<%= description %>"
 arch=(<%= arch %>)
 url='<%= website %>'
-<%= 'license=(' + license + ')' if license.length > 0 -%>
-depends=('<%= depends %>')
-<%= 'makedepends=(' + makedepends.join('\' \'') + ')' if makedepends -%>
-<%= 'groups=(' + groups.join('\' \'') + ')' if groups -%>
-<%= 'replaces=(' + replaces.join('\' \'') + ')' if replaces -%>
-<%= 'conflicts=(' + conflicts.join('\' \'') + ')' if replaces -%>
-<%= 'provides=(' + provides.join('\' \'') + ')' if replaces -%>
-<% if optdepends %>
-  <%= 'optdepends=(' -%>
-  <% for k,v in optdepends %>
-     '<%= k -%>' : '<%= v -%>'
-     <%= '(' -%>
-  <% end -%>
+<%= 'license=(' + license + ')\n' if license.length > 0 -%>
+depends=(<%= depends %>)
+<%= 'makedepends=(' + makedepends + ')\n' if makedepends -%>
+<%= 'groups=(' + groups + ')\n' if groups -%>
+<%= 'replaces=(' + replaces + ')\n' if replaces -%>
+<%= 'conflicts=(' + replaces + ')\n' if replaces -%>
+<%= 'provides=(' + replaces + ')\n' if replaces -%>
+<% if optdepends then %>
+'optdepends=('
+<% for k,v in optdepends %>
+            '<%= k -%>' : '<%= v -%>'
+<% end -%>)
 <% end -%>
 options=('!emptydirs')
 source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem" <%= patch_sha ? '' : ')' %>
-<%= patch_sha ? '  patch' + ')' : '' -%>
+<%= patch_sha ? "       'patch'" + ')\n' : '' -%>
 noextract=("$_gemname-$pkgver.gem")
 sha1sums=('<%= sha1sum %>' <%= patch_sha ? '' : ')' %>
-<%= patch_sha ? "  '" + patch_sha + "')" : '' -%>
+<%= patch_sha ? "          '" + patch_sha + "')\n" : '' -%>
+
 <% if patch_sha then %>
 prepare() {
   gem unpack $_gemname-$pkgver.gem
@@ -98,8 +98,8 @@ package() {
   mv "$pkgdir/usr/bin/<%= from %>" "$pkgdir/usr/bin/<%= to %>"
 <% end if rename %>
 <% if contains_extensions %>
-  mkdir -p "$pkgdir/<%= gem_extension_dir %>/$_gemname-$pkgver/"
-  touch "$pkgdir/<%= gem_extension_dir %>/$_gemname-$pkgver/gem.build_complete"
+  mkdir -p "$pkgdir<%= gem_extension_dir %>/$_gemname-$pkgver/"
+  touch "$pkgdir<%= gem_extension_dir %>/$_gemname-$pkgver/gem.build_complete"
 <% end %>
 }
 }
@@ -491,6 +491,7 @@ def generate_pkgbuild(name, slot, existing_pkg, config)
   rename = (config and config['rename'])
   gem_install_args = (config and config['gem_install_args'])
 
+
   # TOTHINK: install binaries into directory other than /usr/bin?
   params = {
     gem_name: name,
@@ -500,20 +501,20 @@ def generate_pkgbuild(name, slot, existing_pkg, config)
     website: Shellwords.escape(spec.homepage),
     # description: Shellwords.escape(spec.summary),
     description: spec.summary,
-    license: licenses.join(', '),
+    license: "'#{licenses.join('\', \'')}'",
     arch: arch,
     sha1sum: sha1sum,
-    depends: dependencies.join(' '),
+    depends: "'#{dependencies.join('\' \'')}'",
     license_files: find_license_files(spec),
     delete_dirs: delete_dirs_bash,
     remove_binaries: remove_binaries,
     gem_dir: GEM_DIR,
     gem_extension_dir: GEM_EXTENSION_DIR,
     patch_sha: patch_sha,
-    makedepends: makedepends,
+    makedepends: ("'#{makedepends.join('\' \'')}'" if makedepends),
     optdepends: optdepends,
-    groups: groups,
-    replaces: replaces,
+    groups: ("'#{groups.join('\' \'')}'" if groups),
+    replaces: ("'#{replaces.join('\' \'')}'" if replaces),
     rename: rename,
     gem_install_args: gem_install_args,
     contains_extensions: !spec.extensions.empty?
