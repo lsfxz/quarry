@@ -38,35 +38,35 @@ PKGBUILD = %{# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
 # Many thanks to anatol for quarry and gem2arch!
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
-_gemname=<%= gem_name %>
-pkgname=ruby-$_gemname<%= slot %>
-pkgver=<%= pkgver %>
+pkgname='ruby-<%= gem_name + slot %>'
+_gemname='<%= gem_name %>'
+pkgver='<%= pkgver %>'
 pkgrel=<%= pkgrel %>
-pkgdesc=<%= description %>
+pkgdesc='<%= description %>'
 arch=(<%= arch %>)
-url=<%= website %>
-license=(<%= license %>)
-depends=(<%= depends %>)
-makedepends=(<%= makedepends.join(' ') if makedepends %>)
-groups=(<%= groups.join(' ') if groups %>)
-replaces=(<%= replaces.join(' ') if replaces %>)
-conflicts=(<%= replaces.join(' ') if replaces %>)
-provides=(<%= replaces.join(' ') if replaces %>)
-optdepends=(<% for k,v in optdepends -%>
-  '<%= k %>: <%= v %>'
-<% end if optdepends %>
-)
-options=(!emptydirs)
-source=(https://rubygems.org/downloads/$_gemname-$pkgver.gem
-    <%= patch_sha ? 'patch' : '' %>
-)
-noextract=($_gemname-$pkgver.gem)
-sha1sums=('<%= sha1sum %>'
-    <%= patch_sha ? patch_sha : '' %>
-)
-
-prepare() {
+url='<%= website %>'
+<%= 'license=(' + license + ')' if license.length > 0 -%>
+depends=('<%= depends %>')
+<%= 'makedepends=(' + makedepends.join('\' \'') + ')' if makedepends -%>
+<%= 'groups=(' + groups.join('\' \'') + ')' if groups -%>
+<%= 'replaces=(' + replaces.join('\' \'') + ')' if replaces -%>
+<%= 'conflicts=(' + conflicts.join('\' \'') + ')' if replaces -%>
+<%= 'provides=(' + provides.join('\' \'') + ')' if replaces -%>
+<% if optdepends %>
+  <%= 'optdepends=(' -%>
+  <% for k,v in optdepends %>
+     '<%= k -%>' : '<%= v -%>'
+     <%= '(' -%>
+  <% end -%>
+<% end -%>
+options=('!emptydirs')
+source=("https://rubygems.org/downloads/$_gemname-$pkgver.gem" <%= patch_sha ? '' : ')' %>
+<%= patch_sha ? '  patch' + ')' : '' -%>
+noextract=("$_gemname-$pkgver.gem")
+sha1sums=('<%= sha1sum %>' <%= patch_sha ? '' : ')' %>
+<%= patch_sha ? "  '" + patch_sha + "')" : '' -%>
 <% if patch_sha then %>
+prepare() {
   gem unpack $_gemname-$pkgver.gem
   gem spec $_gemname-$pkgver.gem --ruby > $_gemname.gemspec
   cd $_gemname-$pkgver
@@ -74,10 +74,10 @@ prepare() {
   gem build ../$_gemname.gemspec
   mv $_gemname-$pkgver.gem ..
   cd ..
-<% end %>
 
   true
 }
+<% end %>
 
 package() {
   local _gemdir="<%= gem_dir %>"
@@ -453,7 +453,7 @@ def generate_pkgbuild(name, slot, existing_pkg, config)
 
   # let's just assume seperate packages for every architecture are required
   # for gems with native extensions… better safe than sorry.
-  arch = spec.extensions.empty? ? 'any' : 'i686 x86_64 armv6h armv7h aarch64'
+  arch = spec.extensions.empty? ? "'any'" : "'i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64'"
   sha1sum = Digest::SHA1.file(gem_path).hexdigest
   # TODO: if license is not specified in spec, check HEAD spec, check -beta spec
   licenses = spec.licenses.map{|l| Shellwords.escape(l)}
@@ -498,7 +498,8 @@ def generate_pkgbuild(name, slot, existing_pkg, config)
     pkgver: version,
     pkgrel: pkgver,  # if existing version has the same version then +1 here
     website: Shellwords.escape(spec.homepage),
-    description: Shellwords.escape(spec.summary),
+    # description: Shellwords.escape(spec.summary),
+    description: spec.summary,
     license: licenses.join(', '),
     arch: arch,
     sha1sum: sha1sum,
@@ -571,7 +572,7 @@ def build_package(name, slot, existing_pkg)
 
     system "makechrootpkg -D #{INDEX_DIR}:#{CHROOT_QUARRY_PATH} -c -r #{CHROOT_DIR}"
     fail("The binary package was not built: #{bin_filename}") unless File.exists?(bin_filename)
-    `gpg --batch -b #{bin_filename}`
+    # `gpg --batch -b #{bin_filename}`
     FileUtils.mv(bin_filename, INDEX_DIR)
     FileUtils.mv(bin_filename + '.sig', INDEX_DIR)
   }
