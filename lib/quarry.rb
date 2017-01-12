@@ -574,7 +574,7 @@ def build_package(name, slot, existing_pkg)
     fail("The binary package was not built: #{bin_filename}") unless File.exists?(bin_filename)
     # `gpg --batch -b #{bin_filename}`
     FileUtils.mv(bin_filename, INDEX_DIR)
-    FileUtils.mv(bin_filename + '.sig', INDEX_DIR)
+    # FileUtils.mv(bin_filename + '.sig', INDEX_DIR)
   }
 
   `repo-add -s #{REPO_DB_FILE} #{File.join(INDEX_DIR, bin_filename)}`
