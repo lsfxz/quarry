@@ -456,7 +456,8 @@ def generate_pkgbuild(name, slot, existing_pkg, config)
   arch = spec.extensions.empty? ? "'any'" : "'i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64'"
   sha1sum = Digest::SHA1.file(gem_path).hexdigest
   # TODO: if license is not specified in spec, check HEAD spec, check -beta spec
-  licenses = spec.licenses.map{|l| Shellwords.escape(l)}
+  # licenses = spec.licenses.map{|l| Shellwords.escape(l)}
+  licenses = spec.licenses.map{|l| l}
   dependencies = generate_dependency_list(spec, config)
   existing_pkg[2] = dependencies
   # the following shouldn't matter if I only need the PKGBUILDS later on anyway…
@@ -501,7 +502,7 @@ def generate_pkgbuild(name, slot, existing_pkg, config)
     website: Shellwords.escape(spec.homepage),
     # description: Shellwords.escape(spec.summary),
     description: spec.summary,
-    license: "'#{licenses.join('\', \'')}'",
+    license: "\"#{licenses.join('\', \'')}\"",
     arch: arch,
     sha1sum: sha1sum,
     depends: "'#{dependencies.join('\' \'')}'",

@@ -55,10 +55,10 @@ require_all
 highline
 artii
 rchardet
-arachni
 digest
 addressable
 terminal-table
 ruby-progressbar
 netaddr
 sqlite3
+httparty
