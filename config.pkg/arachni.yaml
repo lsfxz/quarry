@@ -5,3 +5,6 @@ groups:
   - blackarch
   - blackarch-webapp
 
+depends:
+  - libxslt
+    libxml2
