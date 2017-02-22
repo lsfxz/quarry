@@ -20,8 +20,11 @@ CHROOT_DIR = File.join(WORK_DIR, 'chroot')
 CHROOT_ROOT_DIR = File.join(CHROOT_DIR, 'root')
 CHROOT_QUARRY_PATH = '/var/quarry-repo' # path to quarry repository inside the chroot
 
-GEM_DIR = Gem.default_dir
-GEM_EXTENSION_DIR = File.join(GEM_DIR, 'extensions', Gem::Platform.local.to_s, Gem.extension_api_version)
+# GEM_DIR = Gem.default_dir
+GEM_DIR = "$(ruby -rubygems -e 'puts Gem.default_dir')"
+# GEM_EXTENSION_DIR = File.join(GEM_DIR, 'extensions', Gem::Platform.local.to_s, Gem.extension_api_version)
+# GEM_EXTENSION_DIR = File.join(GEM_DIR, 'extensions', '$CARCH', Gem.extension_api_version)
+GEM_EXTENSION_DIR = File.join('$_gemdir', 'extensions', '$CARCH', '$(ruby -rubygems -e puts Gem.extension_api_version)')
 
 # gems that conflict with ruby package, 'ruby' already provides it
 # Some gems are bundled:
@@ -98,9 +101,9 @@ package() {
   mv "$pkgdir/usr/bin/<%= from %>" "$pkgdir/usr/bin/<%= to %>"
 <% end if rename %>
 <% if contains_extensions %>
-  rm -rf "$pkgdir/<%= gem_extension_dir %>/$_gemname-$pkgver/"
-  mkdir -p "$pkgdir/<%= gem_extension_dir %>/$_gemname-$pkgver/"
-  touch "$pkgdir/<%= gem_extension_dir %>/$_gemname-$pkgver/gem.build_complete"
+  rm -rf "$pkgdir<%= gem_extension_dir %>/$_gemname-$pkgver/"
+  mkdir -p "$pkgdir<%= gem_extension_dir %>/$_gemname-$pkgver/"
+  touch "$pkgdir<%= gem_extension_dir %>/$_gemname-$pkgver/gem.build_complete"
 <% end %>
 }
 }
