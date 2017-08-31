@@ -13,18 +13,24 @@ QUARRY_DIR = File.expand_path(File.join(File.dirname(__FILE__), '..'))
 INDEX_DIR = File.join(QUARRY_DIR, 'index')  # it is where we keep binary packages
 REPO_DB_FILE = File.join(INDEX_DIR, 'quarry.db.tar.xz')
 CONFIG_PKG_DIR = File.join(QUARRY_DIR, 'config.pkg')
+CONFIG_FILE = File.join(QUARRY_DIR, 'config.yaml')
 WORK_DIR = File.join(QUARRY_DIR, 'work')
 WORK_REPO_DIR = File.join(WORK_DIR, 'repo')
 WORK_BUILD_DIR = File.join(WORK_DIR, 'build')
 CHROOT_DIR = File.join(WORK_DIR, 'chroot')
 CHROOT_ROOT_DIR = File.join(CHROOT_DIR, 'root')
 CHROOT_QUARRY_PATH = '/var/quarry-repo' # path to quarry repository inside the chroot
+ARCHITECTURE = `uname -m`.strip
 
 # GEM_DIR = Gem.default_dir
 GEM_DIR = "$(ruby -rubygems -e 'puts Gem.default_dir')"
 # GEM_EXTENSION_DIR = File.join(GEM_DIR, 'extensions', Gem::Platform.local.to_s, Gem.extension_api_version)
 # GEM_EXTENSION_DIR = File.join(GEM_DIR, 'extensions', '$CARCH', Gem.extension_api_version)
 GEM_EXTENSION_DIR = File.join('$_gemdir', 'extensions', '$CARCH', '$(ruby -rubygems -e puts Gem.extension_api_version)')
+
+# orig:
+# GEM_DIR = Gem.default_dir
+# GEM_EXTENSION_DIR = File.join(GEM_DIR, 'extensions', Gem::Platform.local.to_s, Gem.extension_api_version)
 
 # gems that conflict with ruby package, 'ruby' already provides it
 # Some gems are bundled:
@@ -303,6 +309,13 @@ def gem_exists(name, version)
   return false
 end
 
+def ignored_packages
+  pkgs = @config['ignored_packages'] if @config
+  pkgs = [] if pkgs.nil?
+
+  pkgs.map{|p| [p, nil] }
+end
+
 def init
   @gems_stable = load_gem_index(:released)
   @gems_beta = load_gem_index(:prerelease)
@@ -321,7 +334,7 @@ def init
     # Remove possible cache files left from previous build
     `sudo rm -f /var/cache/pacman/pkg/ruby-*`
 
-    `mkarchroot -C /usr/share/devtools/pacman-extra.conf -M /usr/share/devtools/makepkg-x86_64.conf #{CHROOT_ROOT_DIR} base-devel ruby`
+    `mkarchroot -C /usr/share/devtools/pacman-extra.conf -M /usr/share/devtools/makepkg-#{ARCHITECTURE}.conf #{CHROOT_ROOT_DIR} base-devel ruby`
     pacman_conf = File.join(CHROOT_ROOT_DIR, 'etc', 'pacman.conf')
     `sudo sh -c 'chmod o+w #{pacman_conf}'`
 
@@ -334,6 +347,8 @@ def init
 
     sync_chroot_repo
   end
+
+  @config = YAML.load(IO.read(CONFIG_FILE))
 end
 
 def out_of_date_packages(existing_packages)
@@ -384,6 +399,16 @@ def find_license_files(spec)
   return license_files
 end
 
+# Maps license names from Rubygems to Arch names
+def licenses(spec)
+  spec.licenses.map{|l|
+    case l
+      when 'Apache 2.0' then 'Apache'
+      when 'Apache-2.0' then 'Apache'
+      else l
+    end
+  }
+end
 def calculate_preserved_dirs(spec, config)
   gem_dir = spec.full_gem_path
   # full_require_paths contains absolute path like "/usr/lib/ruby/gems/2.4.0/gems/bson_ext-1.12.5/ext/bson_ext"
@@ -449,6 +474,7 @@ def generate_pkgbuild(name, slot, existing_pkg, config)
   # the following shouldn't matter if I only need the PKGBUILDS later on anyway…
   filename_arch = spec.extensions.empty? ? 'any' : 'x86_64'
   bin_filename = "#{arch_name}-#{version}-#{pkgver}-#{filename_arch}.pkg.tar.xz"
+
 
 
   patch_file = check_pkg_file(name, slot, 'patch')
