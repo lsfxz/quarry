@@ -34,9 +34,9 @@ CONFLICTING_GEMS = %w(power_assert test-unit minitest rake net-telnet did_you_me
 
 
 PKGBUILD = %{# Maintainer: lsfxz (https://github.com/lsfxz/quarry)
-# Many thanks to anatol for quarry and gem2arch!
 # This file is part of BlackArch Linux ( http://blackarch.org ).
 # See COPYING for license details.
+
 pkgname='ruby-<%= gem_name + slot %>'
 _gemname='<%= gem_name %>'
 pkgver='<%= pkgver %>'
@@ -327,7 +327,8 @@ def init
 
     open(pacman_conf, 'a') { |f|
       f.puts '[quarry]'
-      f.puts 'SigLevel = Optional TrustAll'
+      # f.puts 'SigLevel = Optional TrustAll'
+      f.puts 'SigLevel = Never'
       f.puts "Server = file://#{CHROOT_QUARRY_PATH}"
     }
 
@@ -535,7 +536,7 @@ def load_config_file(name, slot)
 end
 
 def sync_chroot_repo
-  `sudo systemd-nspawn -q --bind-ro=#{INDEX_DIR}:#{CHROOT_QUARRY_PATH} -D #{CHROOT_ROOT_DIR} pacman -Sy`
+  `sudo systemd-nspawn -q --bind-ro=#{INDEX_DIR}:#{CHROOT_QUARRY_PATH} -D #{CHROOT_ROOT_DIR} pacman -Syu --noconfirm`
 end
 
 # generates PKGBUILD, builds binary package for it, copies to index directory and adds it to the Arch repository
@@ -555,12 +556,12 @@ def build_package(name, slot, existing_pkg)
 
     system "makechrootpkg -D #{INDEX_DIR}:#{CHROOT_QUARRY_PATH} -c -r #{CHROOT_DIR}"
     fail("The binary package was not built: #{bin_filename}") unless File.exists?(bin_filename)
-    # `gpg --batch -b #{bin_filename}`
+    `gpg --default-key 070453E5 --batch -b #{bin_filename}`
     FileUtils.mv(bin_filename, INDEX_DIR)
-    # FileUtils.mv(bin_filename + '.sig', INDEX_DIR)
+    FileUtils.mv(bin_filename + '.sig', INDEX_DIR)
   }
 
-  `repo-add -s #{REPO_DB_FILE} #{File.join(INDEX_DIR, bin_filename)}`
+  `repo-add -k 070453E5 -s #{REPO_DB_FILE} #{File.join(INDEX_DIR, bin_filename)}`
 end
 
 def build_packages(packages_to_generate, existing_packages)
