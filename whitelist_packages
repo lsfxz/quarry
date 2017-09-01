@@ -23,6 +23,7 @@ mini_portile2
 msgpack
 net-http-digest_auth
 net-http-persistent
+net-http-persistent,2.5
 nokogiri
 ntlm-http
 origami
@@ -64,3 +65,5 @@ netaddr
 sqlite3
 httparty
 twitter
+puma,2.14.0
+multipart-post
